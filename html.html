@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garnish Station Timer — La Console del Bar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #12100e;
+            --paper-color: #f4ecd8;
+            --paper-dark: #e6dac0;
+            --brass: #b89343;
+            --brass-light: #d4af37;
+            --brass-dark: #8a6b29;
+            --wine: #6b1d2f;
+            --text-dark: #2b2521;
+            --text-muted: #6e645a;
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 50%, #241e17 0%, #0c0a09 100%);
+            font-family: 'Montserrat', sans-serif;
+            color: var(--paper-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 980px;
+            background: var(--paper-color);
+            color: var(--text-dark);
+            border-radius: 8px;
+            border: 3px solid var(--brass);
+            box-shadow: 0 0 40px rgba(184, 147, 67, 0.2), var(--shadow);
+            padding: 35px;
+            position: relative;
+            background-image: 
+                radial-gradient(ellipse at top left, rgba(255,255,255,0.5) 0%, transparent 70%),
+                radial-gradient(ellipse at bottom right, rgba(0,0,0,0.05) 0%, transparent 70%);
+        }
+
+        .corner-ornament {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--brass);
+            pointer-events: none;
+        }
+        .top-left { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+        .top-right { top: 8px; right: 8px; border-left: none; border-bottom: none; }
+        .bottom-left { bottom: 8px; left: 8px; border-right: none; border-top: none; }
+        .bottom-right { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+
+        header {
+            text-align: center;
+            border-bottom: 2px dashed var(--brass);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            color: var(--wine);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        header p {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            color: var(--text-muted);
+            margin-top: 5px;
+            font-size: 1.1rem;
+        }
+
+        .top-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-top {
+            background: var(--wine);
+            color: var(--paper-color);
+            border: 1px solid var(--brass);
+            padding: 10px 20px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-top:hover {
+            background: #4a1320;
+        }
+
+        .btn-test-audio {
+            background: var(--brass-dark);
+            color: #fff;
+        }
+        .btn-test-audio:hover {
+            background: var(--brass);
+        }
+
+        .guide-modal {
+            display: none;
+            background: rgba(230, 218, 192, 0.95);
+            border: 2px solid var(--brass);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .guide-modal h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--wine);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .guide-modal ul {
+            padding-left: 20px;
+        }
+
+        .guide-modal li {
+            margin-bottom: 6px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(184, 147, 67, 0.3);
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: var(--brass-dark);
+            border-bottom: 1px solid var(--brass);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #c8b99c;
+            background: #fff;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--wine);
+            box-shadow: 0 0 5px rgba(107, 29, 47, 0.3);
+        }
+
+        .summary-card {
+            background: var(--wine);
+            color: var(--paper-color);
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+            margin-top: 20px;
+        }
+
+        .summary-card h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        .summary-card .highlight {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--brass-light);
+            margin: 8px 0;
+            line-height: 1.3;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .stat-item .val {
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            color: var(--brass-light);
+        }
+
+        .stat-item .lbl {
+            font-size: 0.68rem;
+            opacity: 0.85;
+            text-transform: uppercase;
+        }
+
+        .timer-display {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            text-align: center;
+            color: var(--wine);
+            font-weight: 700;
+            margin: 15px 0;
+            letter-spacing: 2px;
+            background: #fff;
+            border: 2px dashed var(--brass);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button.action-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--brass-dark);
+            background: var(--brass);
+            color: #fff;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button.action-btn:hover {
+            background: var(--brass-dark);
+        }
+
+        button.btn-reset {
+            background: transparent;
+            color: var(--text-dark);
+            border-color: #aaa;
+        }
+
+        button.btn-reset:hover {
+            background: #e0d0b0;
+        }
+
+        .checklist {
+            list-style: none;
+            margin-top: 5px;
+        }
+
+        .checklist li {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+
+        .checklist input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--wine);
+            cursor: pointer;
+        }
+
+        .checklist label {
+            margin-bottom: 0;
+            text-transform: none;
+            font-weight: 400;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .checklist input:checked + label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="corner-ornament top-left"></div>
+    <div class="corner-ornament top-right"></div>
+    <div class="corner-ornament bottom-left"></div>
+    <div class="corner-ornament bottom-right"></div>
+
+    <header>
+        <h1>Garnish Station Timer</h1>
+        <p>Console di Gestione e Organizzazione Professionale del Banco</p>
+    </header>
+
+    <div class="top-buttons">
+        <button class="btn-top" onclick="toggleGuide()">📖 GUIDA UTENTE</button>
+        <button class="btn-top btn-test-audio" onclick="playBarBeep(); alert('🔊 Test audio avviato: hai sentito il beep?');">TEST AUDIO 🔊</button>
+    </div>
+
+    <div class="guide-modal" id="guideModal">
+        <h3>Come funziona la Console e l'Analisi Costi:</h3>
+        <ul>
+            <li><strong>Timer & Prep:</strong> Pianifica il tempo necessario per la mise en place prima del servizio in base al flusso previsto.</li>
+            <li><strong>Beep da Bar & Vibrazione:</strong> Al termine del conto alla rovescia, la console emette un segnale acustico avanzato e una vibrazione mobile per avvisare lo staff. Usa il pulsante "TEST AUDIO" qui sopra se il browser blocca l'audio all'avvio.</li>
+            <li><strong>Checklist Banco:</strong> Spunta i 4 passaggi fondamentali di controllo per garantire una postazione perfetta prima dell'apertura.</li>
+            <li><strong>Costo Reale della Prep:</strong> Calcola sia il costo di materia prima delle guarnizioni che il costo del lavoro dello staff (€/ora).</li>
+        </ul>
+    </div>
+
+    <div class="grid-layout">
+        <div class="left-col">
+            <div class="panel">
+                <div class="panel-title">⚙️ Parametri Servizio & Staff</div>
+                
+                <div class="form-group">
+                    <label for="drinkCount">Stima Drink Previsti (Stasera)</label>
+                    <input type="number" id="drinkCount" value="50" min="1" oninput="calculatePrep()">
+                </div>
+
+                <div class="form-group">
+                    <label for="garnishType">Stile Decorazione Prevalente</label>
+                    <select id="garnishType" onchange="calculatePrep()">
+                        <option value="simple">Essenziale (Spicchi/Twists) — ~15s/drink</option>
+                        <option value="medium" selected>Standard (Fettine disidratate, erbe) — ~25s/drink</option>
+                        <option value="complex">Elaborata (Intagli, spiedini composti) — ~40s/drink</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="avgCost">Costo Medio Garnish per Drink (€)</label>
+                    <input type="number" id="avgCost" value="0.064" step="0.005" oninput="calculatePrep()">
+                </div>
+
+                <div class="form-group">
+                    <label for="hourlyRate">Costo Orario Staff Barman (€/h)</label>
+                    <input type="number" id="hourlyRate" value="12.00" step="0.50" oninput="calculatePrep()">
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Pianificazione & Costi Reali</h3>
+                <div class="highlight" id="summaryOutput">Hai 50 drink? Ti servono 21 min di prep + €3,20 materia + €4,20 staff = €7,40 totale</div>
+                
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div class="val" id="timeOutput">21 Min</div>
+                        <div class="lbl">Tempo Prep</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="val" id="staffCostOutput">4.20 €</div>
+                        <div class="lbl">Costo Staff</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="val" id="totalCostOutput">7.40 €</div>
+                        <div class="lbl">Costo Totale</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="panel">
+                <div class="panel-title">⏱️ Timer Prep Garnish Station</div>
+                <div class="timer-display" id="timerDisplay">00:00</div>
+                <div class="btn-group">
+                    <button class="action-btn" id="startBtn" onclick="toggleTimer()">AVVIA PREP</button>
+                    <button class="action-btn btn-reset" onclick="resetTimer()">RESET</button>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <div class="panel-title">📋 Checklist Mise en Place</div>
+                <ul class="checklist">
+                    <li>
+                        <input type="checkbox" id="chk1">
+                        <label for="chk1">Garnish posizionate per rotazione</label>
+                    </li>
+                    <li>
+                        <input type="checkbox" id="chk2">
+                        <label for="chk2">Ghiaccio tritato / panno umido pronto</label>
+                    </li>
+                    <li>
+                        <input type="checkbox" id="chk3">
+                        <label for="chk3">Pinze dedicate e sanificate</label>
+                    </li>
+                    <li>
+                        <input type="checkbox" id="chk4">
+                        <label for="chk4">Stock riserva 30% nel sottobanco</label>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let timerInterval = null;
+    let secondsLeft = 0;
+    let isRunning = false;
+
+    let audioContext = null;
+    function initAudio() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        } catch (e) {
+            console.log("Errore inizializzazione audio:", e);
+        }
+    }
+
+    function playBarBeep() {
+        initAudio();
+        if (audioContext) {
+            function beep(freq, dur, delay, vol) {
+                setTimeout(() => {
+                    try {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.type = 'square';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(vol, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + dur/1000);
+                        osc.connect(gain); 
+                        gain.connect(audioContext.destination);
+                        osc.start(); 
+                        osc.stop(audioContext.currentTime + dur/1000);
+                    } catch(err) {
+                        console.log("Errore riproduzione oscillatore:", err);
+                    }
+                }, delay);
+            }
+            beep(880, 300, 0, 0.5);
+            beep(880, 300, 400, 0.5);
+            beep(1760, 800, 800, 0.6);
+        }
+        if (navigator.vibrate) {
+            try { navigator.vibrate([200, 100, 200, 100, 500]); } catch(e) {}
+        }
+    }
+
+    function toggleGuide() {
+        const modal = document.getElementById('guideModal');
+        modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function calculatePrep() {
+        const count = parseFloat(document.getElementById('drinkCount').value) || 0;
+        const type = document.getElementById('garnishType').value;
+        const costPerDrink = parseFloat(document.getElementById('avgCost').value) || 0;
+        const rate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+
+        let timePerDrinkInSeconds = 25;
+        if (type === 'simple') timePerDrinkInSeconds = 15;
+        if (type === 'complex') timePerDrinkInSeconds = 40;
+
+        const totalSeconds = Math.ceil((count * timePerDrinkInSeconds));
+        const totalMinutes = Math.ceil(totalSeconds / 60);
+        
+        const matCost = (count * costPerDrink);
+        const staffCost = (totalMinutes / 60) * rate;
+        const grandTotal = matCost + staffCost;
+
+        document.getElementById('timeOutput').innerText = totalMinutes + " Min";
+        document.getElementById('staffCostOutput').innerText = staffCost.toFixed(2) + " €";
+        document.getElementById('totalCostOutput').innerText = grandTotal.toFixed(2) + " €";
+
+        document.getElementById('summaryOutput').innerText = 
+            `Hai ${count} drink? Ti servono ${totalMinutes} min di prep + €${matCost.toFixed(2)} materia + €${staffCost.toFixed(2)} staff = €${grandTotal.toFixed(2)} totale`;
+
+        if (!isRunning) {
+            secondsLeft = totalSeconds;
+            updateTimerDisplay();
+        }
+    }
+
+    function updateTimerDisplay() {
+        const mins = Math.floor(secondsLeft / 60);
+        const secs = secondsLeft % 60;
+        document.getElementById('timerDisplay').innerText = 
+            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function toggleTimer() {
+        initAudio(); // Sblocca l'audio al click sul timer
+        const btn = document.getElementById('startBtn');
+        if (isRunning) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            btn.innerText = "RIPRENDI PREP";
+            btn.style.background = "var(--brass)";
+        } else {
+            if (secondsLeft <= 0) calculatePrep();
+            isRunning = true;
+            btn.innerText = "PAUSA";
+            btn.style.background = "var(--wine)";
+            timerInterval = setInterval(() => {
+                if (secondsLeft > 0) {
+                    secondsLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    playBarBeep();
+                    alert("⏱️ TEMPO PREP SCADUTO! La garnish station è pronta per il servizio.");
+                    btn.innerText = "AVVIA PREP";
+                    btn.style.background = "var(--brass)";
+                }
+            }, 1000);
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        const btn = document.getElementById('startBtn');
+        btn.innerText = "AVVIA PREP";
+        btn.style.background = "var(--brass)";
+        calculatePrep();
+    }
+
+    calculatePrep();
+
+    document.addEventListener('touchstart', initAudio, {once: true});
+    document.addEventListener('click', initAudio, {once: true});
+</script>
+
+</body>
+</html>
